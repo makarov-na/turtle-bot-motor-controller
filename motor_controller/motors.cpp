@@ -108,7 +108,7 @@ Chassis::Chassis(Encoders &encoders)
           {kPinEnbL, kPinIn3L, kPinIn4L, -1, encoders[MotorId::Left]},
           {kPinEnaR, kPinIn1R, kPinIn2R, +1, encoders[MotorId::Right]}} {}
 
-void Chassis::begin() {
+void Chassis::init() {
   pinMode(kPinEnaR, OUTPUT);
   pinMode(kPinIn1R, OUTPUT);
   pinMode(kPinIn2R, OUTPUT);
@@ -120,7 +120,7 @@ void Chassis::begin() {
   motors_[index(MotorId::Right)].coast();
   state_ = DriveState::Stopped;
 
-  encoders_.begin();
+  encoders_.init();
 }
 
 void Chassis::tick(uint32_t now) {

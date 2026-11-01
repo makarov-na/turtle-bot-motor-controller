@@ -95,7 +95,7 @@ int32_t Encoder::takeTicks() const {
   return snapshot;
 }
 
-void Encoders::begin() {
+void Encoders::init() {
   pinMode(kPinEncLA, INPUT_PULLUP);
   pinMode(kPinEncLB, INPUT_PULLUP);
   pinMode(kPinEncRA, INPUT_PULLUP);

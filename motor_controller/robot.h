@@ -19,7 +19,7 @@ class Robot {
  public:
   explicit Robot(Encoders &encoders);
 
-  void begin();
+  void init();
   void tick();
 
  private:

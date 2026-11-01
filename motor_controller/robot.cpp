@@ -8,9 +8,9 @@
 
 Robot::Robot(Encoders &encoders) : chassis_(encoders) {}
 
-void Robot::begin() {
-  chassis_.begin();
-  telemetry_.begin(Serial);
+void Robot::init() {
+  chassis_.init();
+  telemetry_.init(Serial);
 }
 
 void Robot::tick() {

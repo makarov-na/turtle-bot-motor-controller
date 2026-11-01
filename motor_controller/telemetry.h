@@ -23,9 +23,9 @@ struct TelemetryFrame {
 
 class Telemetry {
  public:
-  // Привязывает кадры к порту. Вызывается из Robot::begin(), когда UART уже
+  // Привязывает кадры к порту. Вызывается из Robot::init(), когда UART уже
   // настроен BT-конфигуратором.
-  void begin(Stream &serial);
+  void init(Stream &serial);
 
   // Печатает кадр не чаще периода телеметрии. now — единый источник времени
   // основного цикла.

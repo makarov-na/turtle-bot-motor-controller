@@ -57,7 +57,7 @@ class Encoders {
   Encoders(const Encoders &) = delete;
   Encoders &operator=(const Encoders &) = delete;
 
-  void begin();
+  void init();
 
   // Обрабатывает фронт на любой из линий A0-A3. Вызывается из ISR.
   void handleInterrupt();

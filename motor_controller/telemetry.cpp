@@ -38,7 +38,7 @@ void sendFrame(Stream &serial, const TelemetryFrame &frame) {
 
 }  // namespace
 
-void Telemetry::begin(Stream &serial) {
+void Telemetry::init(Stream &serial) {
   serial_ = &serial;
 }
 

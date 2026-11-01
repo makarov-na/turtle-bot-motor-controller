@@ -65,7 +65,7 @@ class Chassis {
  public:
   explicit Chassis(Encoders &encoders);
 
-  void begin();
+  void init();
 
   // Один тик привода из Robot::tick(): завершает торможение по таймеру и,
   // если привод в режиме Run, выполняет итерацию PID.
