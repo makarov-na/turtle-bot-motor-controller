@@ -22,8 +22,6 @@ struct MotorTelemetry {
   float integral;
 };
 
-class Chassis;
-
 // Один мотор: энкодер, драйвер L298N, редуктор и контур скорости. Состояние
 // контура закрыто; менять его может только Chassis.
 class Motor {
