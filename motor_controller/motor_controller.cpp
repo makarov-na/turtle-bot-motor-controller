@@ -1,19 +1,19 @@
-// --- Композиция модулей: реализация ----------------------------------------
+// --- Блок управления приводом: реализация ----------------------------------
 // Порядок тика: привод, приём команд, кадр телеметрии, watchdog.
-// Robot не владеет модулями: ссылки на Chassis, CommandReceiver и Telemetry
-// приходят из основного скетча.
+// MotorController не владеет модулями: ссылки на Chassis, CommandReceiver и
+// Telemetry приходят из основного скетча.
 
-#include "robot.h"
+#include "motor_controller.h"
 
-Robot::Robot(Chassis &chassis, CommandReceiver &commands,
-             Telemetry &telemetry)
+MotorController::MotorController(Chassis &chassis, CommandReceiver &commands,
+                                 Telemetry &telemetry)
     : chassis_(chassis), commands_(commands), telemetry_(telemetry) {}
 
-void Robot::init() {
+void MotorController::init() {
   chassis_.init();
 }
 
-void Robot::tick() {
+void MotorController::tick() {
   uint32_t now = millis();
 
   chassis_.tick(now);

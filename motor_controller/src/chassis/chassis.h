@@ -12,7 +12,7 @@
 
 #include "encoders.h"
 #include "motor.h"
-#include "src/telemetry/telemetry.h"
+#include "../telemetry/telemetry.h"
 
 class Chassis {
  public:
@@ -20,8 +20,8 @@ class Chassis {
 
   void init();
 
-  // Один тик привода из Robot::tick(): завершает торможение по таймеру и,
-  // если привод в режиме Run, выполняет итерацию PID.
+  // Один тик привода из MotorController::tick(): завершает торможение по
+  // таймеру и, если привод в режиме Run, выполняет итерацию PID.
   void tick(uint32_t now);
 
   void set_speed(float linearSpeed, float angularSpeed);

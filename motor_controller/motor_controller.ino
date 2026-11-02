@@ -26,35 +26,36 @@
 // 1000 мс, бот выполняет stop() до прихода новой команды.
 
 #include "src/bluetooth/bt_config.h"
-#include "chassis.h"
-#include "command_receiver.h"
-#include "encoders.h"
+#include "src/protocol/command_receiver.h"
+#include "motor_controller.h"
+#include "src/chassis/chassis.h"
+#include "src/chassis/encoders.h"
 #include "src/telemetry/telemetry.h"
-#include "robot.h"
 
 // Модули — отдельные C++-единицы трансляции:
-//   encoders.h/.cpp         — Encoder/Encoders и ISR квадратурных энкодеров;
-//   chassis.h/.cpp          — Chassis: привод целиком, режимы и телеметрия;
-//   motor.h/.cpp            — Motor: драйвер, энкодер и контур скорости;
-//   drive_config.h          — общие константы привода (V_MAX, база колёс);
-//   robot.h/.cpp            — Robot: композиция ядровых модулей;
+//   src/chassis/encoders.h/.cpp — Encoder/Encoders и ISR квадратурных энкодеров;
+//   src/chassis/chassis.h/.cpp — Chassis: привод целиком, режимы и телеметрия;
+//   src/chassis/motor.h/.cpp — Motor: драйвер, энкодер и контур скорости;
+//   src/chassis/drive_config.h — общие константы привода (V_MAX, база колёс);
+//   motor_controller.h/.cpp — MotorController: композиция ядровых модулей;
 //   src/bluetooth/bt_config.h/.cpp — автоконфигурация HC-06;
-//   command_receiver.h/.cpp — приём, разбор команд и watchdog;
+//   src/protocol/command_receiver.h/.cpp — приём, разбор команд и watchdog;
 //   src/telemetry/telemetry.h/.cpp — TelemetryFrame и периодический кадр ack.
 //
 // Здесь остаются только точки входа Arduino и создание корневых экземпляров.
 // Порядок объявления = порядок конструирования: Encoders первым (его адрес
-// нужен ISR), Robot последним (он получает ссылки на остальные модули).
+// нужен ISR), MotorController последним (он получает ссылки на остальные
+// модули).
 Encoders encoders;
 Chassis chassis(encoders);
 CommandReceiver commands(Serial);
 Telemetry telemetry(Serial);
-Robot robot(chassis, commands, telemetry);
+MotorController controller(chassis, commands, telemetry);
 BtConfigurator bt(Serial, LED_BUILTIN);
 
 void setup() {
   // Инициализация железа — явная, после конструирования всех модулей.
-  robot.init();
+  controller.init();
 
   // Автоконфигурация HC-06: поднимает UART и переводит модуль на рабочую
   // скорость. Состояние после этого живёт в самом модуле и Hardware Serial.
@@ -62,5 +63,5 @@ void setup() {
 }
 
 void loop() {
-  robot.tick();
+  controller.tick();
 }
