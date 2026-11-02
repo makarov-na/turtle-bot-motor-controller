@@ -1,8 +1,8 @@
 // --- Композиция модулей: реализация ----------------------------------------
 // Порядок тика: привод, приём команд, кадр телеметрии, watchdog.
-// TelemetryFrame и Telemetry — в telemetry.h/.cpp, CommandReceiver — в
-// command_receiver.h/.cpp, автоконфигурация HC-06 запускается отдельно из
-// setup().
+// TelemetryFrame и Telemetry — в src/telemetry/telemetry.h/.cpp,
+// CommandReceiver — в command_receiver.h/.cpp, автоконфигурация HC-06
+// запускается отдельно из setup().
 
 #include "robot.h"
 

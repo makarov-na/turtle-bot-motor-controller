@@ -12,8 +12,8 @@
 #include <Arduino.h>
 
 #include "command_receiver.h"
-#include "motors.h"
-#include "telemetry.h"
+#include "chassis.h"
+#include "src/telemetry/telemetry.h"
 
 class Robot {
  public:

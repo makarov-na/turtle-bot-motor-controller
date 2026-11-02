@@ -25,17 +25,19 @@
 // Команды принимаются всегда. Watchdog: если команда не получена более
 // 1000 мс, бот выполняет stop() до прихода новой команды.
 
-#include "bt_config.h"
+#include "src/bluetooth/bt_config.h"
 #include "encoders.h"
 #include "robot.h"
 
 // Модули — отдельные C++-единицы трансляции:
 //   encoders.h/.cpp         — Encoder/Encoders и ISR квадратурных энкодеров;
-//   motors.h/.cpp           — Motor/Chassis: драйверы, кинематика и PID;
+//   chassis.h/.cpp          — Chassis: привод целиком, режимы и телеметрия;
+//   motor.h/.cpp            — Motor: драйвер, энкодер и контур скорости;
+//   drive_config.h          — общие константы привода (V_MAX, база колёс);
 //   robot.h/.cpp            — Robot: композиция ядровых модулей;
-//   bt_config.h/.cpp        — автоконфигурация HC-06;
+//   src/bluetooth/bt_config.h/.cpp — автоконфигурация HC-06;
 //   command_receiver.h/.cpp — приём, разбор команд и watchdog;
-//   telemetry.h/.cpp        — TelemetryFrame и периодический кадр ack.
+//   src/telemetry/telemetry.h/.cpp — TelemetryFrame и периодический кадр ack.
 //
 // Здесь остаются только точки входа Arduino и создание корневых экземпляров.
 

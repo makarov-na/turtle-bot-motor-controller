@@ -11,8 +11,6 @@
 
 #include <Arduino.h>
 
-#include "motor_id.h"
-
 class Encoder {
  public:
   Encoder() = default;
@@ -62,7 +60,8 @@ class Encoders {
   // Обрабатывает фронт на любой из линий A0-A3. Вызывается из ISR.
   void handleInterrupt();
 
-  Encoder &operator[](MotorId id);
+  Encoder &left();
+  Encoder &right();
 
  private:
   Encoder encoders_[2];
