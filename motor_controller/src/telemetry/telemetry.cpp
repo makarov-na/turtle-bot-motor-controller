@@ -38,9 +38,7 @@ void sendFrame(Stream &serial, const TelemetryFrame &frame) {
 
 }  // namespace
 
-void Telemetry::init(Stream &serial) {
-  serial_ = &serial;
-}
+Telemetry::Telemetry(Stream &serial) : serial_(&serial) {}
 
 void Telemetry::tick(uint32_t now, const TelemetryFrame &frame) {
   if (now - lastMs_ >= kPeriodMs) {

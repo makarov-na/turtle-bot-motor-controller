@@ -1,16 +1,16 @@
 // --- Композиция модулей: реализация ----------------------------------------
 // Порядок тика: привод, приём команд, кадр телеметрии, watchdog.
-// TelemetryFrame и Telemetry — в src/telemetry/telemetry.h/.cpp,
-// CommandReceiver — в command_receiver.h/.cpp, автоконфигурация HC-06
-// запускается отдельно из setup().
+// Robot не владеет модулями: ссылки на Chassis, CommandReceiver и Telemetry
+// приходят из основного скетча.
 
 #include "robot.h"
 
-Robot::Robot(Encoders &encoders) : chassis_(encoders) {}
+Robot::Robot(Chassis &chassis, CommandReceiver &commands,
+             Telemetry &telemetry)
+    : chassis_(chassis), commands_(commands), telemetry_(telemetry) {}
 
 void Robot::init() {
   chassis_.init();
-  telemetry_.init(Serial);
 }
 
 void Robot::tick() {
@@ -21,7 +21,7 @@ void Robot::tick() {
   // Свежее время для команд: они могли прийти уже после снятия now.
   uint32_t cmdNow = millis();
   CommandReceiver::Command cmd;
-  while (commands_.poll(Serial, cmdNow, cmd)) {
+  while (commands_.poll(cmdNow, cmd)) {
     if (cmd.action == CommandReceiver::Action::PowerStop) {
       chassis_.power_stop();
     } else {

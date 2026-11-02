@@ -3,7 +3,7 @@
 // уставок и остановками. Снаружи предоставляет set_speed/stop/power_stop и
 // снимок для телеметрии.
 //
-// Реализация — в chassis.cpp. Экземпляр Chassis создаёт Robot.
+// Реализация — в chassis.cpp. Экземпляр Chassis создаётся в основном скетче.
 
 #ifndef CHASSIS_H
 #define CHASSIS_H

@@ -26,7 +26,10 @@
 // 1000 мс, бот выполняет stop() до прихода новой команды.
 
 #include "src/bluetooth/bt_config.h"
+#include "chassis.h"
+#include "command_receiver.h"
 #include "encoders.h"
+#include "src/telemetry/telemetry.h"
 #include "robot.h"
 
 // Модули — отдельные C++-единицы трансляции:
@@ -40,21 +43,22 @@
 //   src/telemetry/telemetry.h/.cpp — TelemetryFrame и периодический кадр ack.
 //
 // Здесь остаются только точки входа Arduino и создание корневых экземпляров.
-
-// Порядок объявления важен: encoders инициализируется до robot, который
-// сохраняет на него ссылку.
+// Порядок объявления = порядок конструирования: Encoders первым (его адрес
+// нужен ISR), Robot последним (он получает ссылки на остальные модули).
 Encoders encoders;
-Robot robot(encoders);
+Chassis chassis(encoders);
+CommandReceiver commands(Serial);
+Telemetry telemetry(Serial);
+Robot robot(chassis, commands, telemetry);
+BtConfigurator bt(Serial, LED_BUILTIN);
 
 void setup() {
-  // Ядровая логика — экземпляр Robot выше.
+  // Инициализация железа — явная, после конструирования всех модулей.
   robot.init();
 
-  // Автоконфигурация HC-06 — самостоятельный опциональный шаг. Экземпляр
-  // нужен только на время инициализации: после setup() состояние живёт в
-  // самом модуле HC-06 и Hardware Serial.
-  BtConfigurator bt;
-  bt.btInit(Serial, LED_BUILTIN);
+  // Автоконфигурация HC-06: поднимает UART и переводит модуль на рабочую
+  // скорость. Состояние после этого живёт в самом модуле и Hardware Serial.
+  bt.init();
 }
 
 void loop() {

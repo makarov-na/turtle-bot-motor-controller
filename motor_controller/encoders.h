@@ -4,7 +4,7 @@
 // Encoders владеет двумя экземплярами и общим обработчиком прерывания PCINT1.
 //
 // Экземпляр encoders создаётся в основном скетче: его адрес нужен ISR, а ссылку
-// на него получает Robot. Реализация и ISR — в encoders.cpp.
+// на него получает Chassis. Реализация и ISR — в encoders.cpp.
 
 #ifndef ENCODERS_H
 #define ENCODERS_H
