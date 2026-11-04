@@ -55,12 +55,16 @@ MotorController controller(chassis, commands, telemetry);
 BtConfigurator bt(Serial, LED_BUILTIN);
 
 void setup() {
+  // UART для телеметрии и команд. bt.init() тоже поднимает Serial, но сейчас
+  // автоконфигурация HC-06 отключена, поэтому инициализация нужна явно.
+  Serial.begin(115200);
+
   // Инициализация железа — явная, после конструирования всех модулей.
   controller.init();
 
   // Автоконфигурация HC-06: поднимает UART и переводит модуль на рабочую
   // скорость. Состояние после этого живёт в самом модуле и Hardware Serial.
-  bt.init();
+  //bt.init();
 }
 
 void loop() {
