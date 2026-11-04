@@ -1,20 +1,26 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Проект: блок управления приводом turtle-bot.
+  Аппаратная платформа: Arduino Nano ATmega328P (новый загрузчик),
+  PlatformIO env nanoatmega328new, framework Arduino, C++11.
+  Привод: L298N, два мотора JGB37-520 с квадратурными энкодерами.
+  Энкодеры: правый A0/A1, левый A2/A3, ISR на PCINT1.
+  Bluetooth: HC-06 на Hardware Serial D0 (RX) / D1 (TX), 115200 8N1.
+  Управление: текстовый протокол set_speed <linear_mm_s> <angular_rad_s>.
+  Телеметрия: кадр ack раз в 200 мс.
+  ПК-пульт: Python 3, только стандартная библиотека, py_scripts/pc_control.
+  Документация: остаётся в репозитории turtle-bot, ссылки через GitHub.
+  Язык документации и комментариев — русский; имена в коде — английские.
+  Проверки: ~/.platformio/penv/bin/pio run (или pio run, если CLI в PATH),
+  openspec validate --all --strict.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - Указывать изменения в прошивке, ПК-пульте, документации и железе.
+    - Отдельно перечислять breaking changes для протокола или проводки.
+  design:
+    - Фиксировать решения, влияющие на распиновку, протокол или тайминги.
+  tasks:
+    - Отмечать задачу выполненной только после сборки или живого прогона.
+    - Для задач с железом указывать, нужен ли прогон на стенде.
