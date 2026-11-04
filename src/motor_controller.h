@@ -12,9 +12,9 @@
 
 #include <Arduino.h>
 
-#include "src/protocol/command_receiver.h"
-#include "src/chassis/chassis.h"
-#include "src/telemetry/telemetry.h"
+#include "protocol/command_receiver.h"
+#include "chassis/chassis.h"
+#include "telemetry/telemetry.h"
 
 class MotorController {
  public:

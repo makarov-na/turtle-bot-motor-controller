@@ -156,11 +156,10 @@ ack <n> <v> <w> mL=<ml> mR=<mr> oL=<ol> oR=<or> iL=<il> iR=<ir>
 src/
   main.cpp                  точка входа Arduino
   motor_controller.*        композиция модулей
-  src/
-    bluetooth/              автоконфигурация HC-06
-    chassis/                моторы, энкодеры, ПИД, привод
-    protocol/               приём и разбор команд
-    telemetry/              кадр телеметрии
+  bluetooth/                автоконфигурация HC-06
+  chassis/                  моторы, энкодеры, ПИД, привод
+  protocol/                 приём и разбор команд
+  telemetry/                кадр телеметрии
 py_scripts/pc_control/      консольный пульт
 openspec/                   спецификации и backlog
 ```

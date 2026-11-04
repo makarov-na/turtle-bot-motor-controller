@@ -67,8 +67,8 @@
 
 ## Ссылки
 
-- Прошивка: `src/src/chassis/encoders.cpp`, `src/src/chassis/motor.cpp`,
-  `src/src/chassis/chassis.cpp`, `src/motor_controller.cpp`
+- Прошивка: `src/chassis/encoders.cpp`, `src/chassis/motor.cpp`,
+  `src/chassis/chassis.cpp`, `src/motor_controller.cpp`
   (`Encoder::measureSpeed`, `Motor::pidUpdate`, `Chassis::controlLoop_`,
   `MotorController::tick`)
 - Архивные планы: `openspec/changes/archive/2026-10-18-decouple-telemetry-from-commands/`,

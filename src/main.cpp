@@ -26,12 +26,12 @@
 // Команды принимаются всегда. Watchdog: если команда не получена более
 // 1000 мс, бот выполняет stop() до прихода новой команды.
 
-#include "src/bluetooth/bt_config.h"
-#include "src/protocol/command_receiver.h"
+#include "bluetooth/bt_config.h"
+#include "protocol/command_receiver.h"
 #include "motor_controller.h"
-#include "src/chassis/chassis.h"
-#include "src/chassis/encoders.h"
-#include "src/telemetry/telemetry.h"
+#include "chassis/chassis.h"
+#include "chassis/encoders.h"
+#include "telemetry/telemetry.h"
 
 // Модули — отдельные C++-единицы трансляции:
 //   src/chassis/encoders.h/.cpp — Encoder/Encoders и ISR квадратурных энкодеров;

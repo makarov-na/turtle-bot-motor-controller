@@ -46,14 +46,14 @@ CLAMP_MAX = 100.0
 # Скорость виртуального tty /dev/rfcomm0. Реальную скорость UART задаёт
 # HC-06 (AT+BAUD8); здесь она должна совпадать, иначе настройка вводит в
 # заблуждение. Должна совпадать с kBaud в
-# src/src/bluetooth/bt_config.h.
+# src/bluetooth/bt_config.h.
 PORT_BAUD = termios.B115200
 LINK_TIMEOUT_S = 5.0
 
 V_MAX_MM_S = 300.0
 WHEELBASE_MM = 185.0
 # Лимиты должны совпадать с константами kVMaxMmS и kWheelbaseMm в
-# src/src/chassis/drive_config.h
+# src/chassis/drive_config.h
 OMEGA_MAX_RAD_S = 2.0 * V_MAX_MM_S / WHEELBASE_MM
 
 KEY_UP = (b"\x1b[A", b"\x1bOA")
@@ -114,7 +114,7 @@ def status_line(linear_pct, angular_pct):
 
 # ---------------------------------------------------------------------------
 # Телеметрия: парсинг ack и кольцевой буфер последних значений.
-# Формат строки с бота (src/src/telemetry/telemetry.cpp):
+# Формат строки с бота (src/telemetry/telemetry.cpp):
 #   ack <n> <v> <w> mL=<ml> mR=<mr> oL=<ol> oR=<or> iL=<il> iR=<ir>
 # v/w — уставка (линейная мм/с, угловая рад/с), mL/mR — изм. мм/с,
 # oL/oR — ШИМ ±255, iL/iR — интеграл ПИД (±PID_INTEGRAL_LIMIT).
