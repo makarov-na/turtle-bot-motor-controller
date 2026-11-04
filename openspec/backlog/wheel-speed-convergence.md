@@ -4,7 +4,7 @@
 - **Дата:** 2026-10-19
 - **Приоритет:** низкий/средний (косметика управления; рывков уже нет)
 - **Предшественники:** изменения `decouple-telemetry-from-commands` и `balance-wheel-speeds`
-  (архивированы 2026-10-18 и 2026-10-19), коммит `f3b7b79`
+  (архивированы 2026-10-18 и 2026-10-19)
 
 ## Контекст
 
@@ -67,13 +67,14 @@
 
 ## Ссылки
 
-- Прошивка: `src/motor_controller/motor_controller/motor_controller.ino`
-  (`Wheel::measureSpeed`, `Wheel::pidUpdate`, `controlLoop`, `loop`)
+- Прошивка: `src/src/chassis/encoders.cpp`, `src/src/chassis/motor.cpp`,
+  `src/src/chassis/chassis.cpp`, `src/motor_controller.cpp`
+  (`Encoder::measureSpeed`, `Motor::pidUpdate`, `Chassis::controlLoop_`,
+  `MotorController::tick`)
 - Архивные планы: `openspec/changes/archive/2026-10-18-decouple-telemetry-from-commands/`,
   `openspec/changes/archive/2026-10-19-balance-wheel-speeds/`
 - Основные спеки: `openspec/specs/motion-control/spec.md`, `openspec/specs/bluetooth-telemetry/spec.md`
 - Лог прогона: `/tmp/opencode/balance_run.csv` (временный), скрипт-обвязка `/tmp/opencode/balance_check.py`
-- Коммит: `f3b7b79`
 
 ## Когда вернёмся
 

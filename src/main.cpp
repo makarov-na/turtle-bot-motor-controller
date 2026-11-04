@@ -10,7 +10,7 @@
 //   power_stop() — силовое торможение (L298N fast motor stop)
 //
 // Подключение и направления моторов сверять с
-// docs/4. Блок управления приводом/spec.md
+// https://github.com/makarov-na/turtle-bot/blob/refactoring/docs/4.%20Блок%20управления%20приводом/spec.md
 //
 // HC-06 Bluetooth: D0 (RX), D1 (TX), 115200 baud, Hardware Serial
 //   HC-06 TX → D0 (напрямую, 3.3V читается как HIGH на 5V-логике)
