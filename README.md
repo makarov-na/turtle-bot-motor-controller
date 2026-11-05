@@ -155,6 +155,7 @@ ack <n> <v> <w> mL=<ml> mR=<mr> oL=<ol> oR=<or> iL=<il> iR=<ir>
 ```text
 src/
   main.cpp                  точка входа Arduino
+  app_config.h              общие настройки (скорость UART)
   motor_controller.*        композиция модулей
   bluetooth/                автоконфигурация HC-06
   chassis/                  моторы, энкодеры, ПИД, привод

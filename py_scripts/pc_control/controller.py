@@ -45,8 +45,8 @@ CLAMP_MIN = -100.0
 CLAMP_MAX = 100.0
 # Скорость виртуального tty /dev/rfcomm0. Реальную скорость UART задаёт
 # HC-06 (AT+BAUD8); здесь она должна совпадать, иначе настройка вводит в
-# заблуждение. Должна совпадать с kBaud в
-# src/bluetooth/bt_config.h.
+# заблуждение. Должна совпадать с kSerialBaud в
+# src/app_config.h.
 PORT_BAUD = termios.B115200
 LINK_TIMEOUT_S = 5.0
 

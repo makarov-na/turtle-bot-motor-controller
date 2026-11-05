@@ -10,16 +10,16 @@
 
 #include <Arduino.h>
 
+#include "../app_config.h"
+
 class BtConfigurator {
  public:
   BtConfigurator(HardwareSerial &serial, uint8_t ledPin);
 
-  // Переводит модуль на kBaud, мигает результатом и здоровается с ПК.
+  // Переводит модуль на kSerialBaud, мигает результатом и здоровается с ПК.
   void init();
 
  private:
-  static constexpr uint32_t kBaud = 115200;
-
   bool atCommandRaw_(const char *cmd, bool crlf, uint32_t timeoutMs);
   bool atCommand_(const char *cmd, uint32_t timeoutMs);
   bool detectDialect_();

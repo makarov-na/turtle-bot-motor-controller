@@ -26,6 +26,7 @@
 // Команды принимаются всегда. Watchdog: если команда не получена более
 // 1000 мс, бот выполняет stop() до прихода новой команды.
 
+#include "app_config.h"
 #include "bluetooth/bt_config.h"
 #include "protocol/command_receiver.h"
 #include "motor_controller.h"
@@ -57,13 +58,14 @@ BtConfigurator bt(Serial, LED_BUILTIN);
 void setup() {
   // UART для телеметрии и команд. bt.init() тоже поднимает Serial, но сейчас
   // автоконфигурация HC-06 отключена, поэтому инициализация нужна явно.
-  Serial.begin(115200);
+  Serial.begin(kSerialBaud);
 
   // Инициализация железа — явная, после конструирования всех модулей.
   controller.init();
 
   // Автоконфигурация HC-06: поднимает UART и переводит модуль на рабочую
   // скорость. Состояние после этого живёт в самом модуле и Hardware Serial.
+  //TODO сделать по настроке
   //bt.init();
 }
 

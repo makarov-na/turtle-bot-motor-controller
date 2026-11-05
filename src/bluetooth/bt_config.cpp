@@ -9,7 +9,7 @@
 // его перевести: в AT-режиме (модуль ещё ни с кем не соединён по Bluetooth)
 // команда смены скорости переключает UART на 115200. Если модуль уже на
 // 115200 или сейчас в data-режиме (кто-то подключён), команда игнорируется,
-// и дальше работа идёт на kBaud.
+// и дальше работа идёт на kSerialBaud.
 //
 // Диалекты AT различаются:
 //   * официальный HC-06 (linvor/hc01) — команды БЕЗ перевода строки;
@@ -30,8 +30,6 @@
 
 #include "bt_config.h"
 
-constexpr uint32_t BtConfigurator::kBaud;
-
 namespace {
 
 // Коды результата автоконфигурации. Значения совпадают с прежними кодами
@@ -50,11 +48,11 @@ enum class BtResult : uint8_t {
 BtConfigurator::BtConfigurator(HardwareSerial &serial, uint8_t ledPin)
     : serial_(&serial), ledPin_(ledPin) {}
 
-// Единственная публичная точка входа: переводит модуль на kBaud, мигает
+// Единственная публичная точка входа: переводит модуль на kSerialBaud, мигает
 // результатом и здоровается с ПК.
 // Пока идёт AT-последовательность, встроенный светодиод горит постоянно — так
 // видно, что работает новая прошивка. По выходу Hardware Serial всегда открыт
-// на kBaud.
+// на kSerialBaud.
 void BtConfigurator::init() {
   // Индикатор: горит, пока идёт AT-последовательность.
   pinMode(ledPin_, OUTPUT);
@@ -67,19 +65,19 @@ void BtConfigurator::init() {
   BtResult result;
   if (detectDialect_()) {
     setBaud115200_();
-    serial_->begin(kBaud);
+    serial_->begin(kSerialBaud);
     delay(100);
     // После смены скорости модуль перезагружается: диалект определяем заново.
     result = detectDialect_() ? BtResult::Migrated : BtResult::NotConfirmed;
   } else {
-    // На 9600 тишина: возможно, модуль уже на kBaud. Диалект здесь ещё не
+    // На 9600 тишина: возможно, модуль уже на kSerialBaud. Диалект здесь ещё не
     // известен (на повторных стартах 9600 молчит), поэтому определяем его.
-    serial_->begin(kBaud);
+    serial_->begin(kSerialBaud);
     delay(100);
     if (detectDialect_()) {
       result = BtResult::AlreadyAtBaud;
     } else {
-      // Модуль не на 9600 и не на kBaud: перебираем промежуточные скорости.
+      // Модуль не на 9600 и не на kSerialBaud: перебираем промежуточные скорости.
       static const uint32_t kRates[] = {19200, 38400, 57600};
       bool found = false;
       for (uint8_t i = 0; i < sizeof(kRates) / sizeof(kRates[0]); i++) {
@@ -87,7 +85,7 @@ void BtConfigurator::init() {
         delay(100);
         if (detectDialect_()) {
           setBaud115200_();
-          serial_->begin(kBaud);
+          serial_->begin(kSerialBaud);
           delay(100);
           result = detectDialect_() ? BtResult::MigratedFromOther
                                     : BtResult::NotConfirmed;
@@ -96,7 +94,7 @@ void BtConfigurator::init() {
         }
       }
       if (!found) {
-        serial_->begin(kBaud);
+        serial_->begin(kSerialBaud);
         delay(100);
         result = BtResult::NoAnswer;
       }
