@@ -70,11 +70,6 @@ The firmware SHALL NOT start any motion by itself. The demo sequence (automatic 
 - **WHEN** the first valid `set_speed` command arrives after boot
 - **THEN** the robot moves according to that command only
 
-#### Scenario: Startup greeting sent once
-
-- **WHEN** the Arduino completes setup
-- **THEN** a single greeting message is sent over Hardware Serial, and no further periodic messages are sent
-
 ### Requirement: Out-of-range commands are handled safely
 
 The firmware SHALL accept commands whose values exceed the configured limits and SHALL handle them through the existing speed limiting so that no wheel is driven beyond `V_MAX_MM_S`. The command SHALL NOT be rejected or disrupt the control loop.

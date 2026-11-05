@@ -65,8 +65,9 @@ void setup() {
 
   // Автоконфигурация HC-06: поднимает UART и переводит модуль на рабочую
   // скорость. Состояние после этого живёт в самом модуле и Hardware Serial.
-  //TODO сделать по настроке
-  //bt.init();
+  if (kEnableBtAutoConfig) {
+    bt.init();
+  }
 }
 
 void loop() {

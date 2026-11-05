@@ -48,8 +48,8 @@ enum class BtResult : uint8_t {
 BtConfigurator::BtConfigurator(HardwareSerial &serial, uint8_t ledPin)
     : serial_(&serial), ledPin_(ledPin) {}
 
-// Единственная публичная точка входа: переводит модуль на kSerialBaud, мигает
-// результатом и здоровается с ПК.
+// Единственная публичная точка входа: переводит модуль на kSerialBaud и мигает
+// результатом.
 // Пока идёт AT-последовательность, встроенный светодиод горит постоянно — так
 // видно, что работает новая прошивка. По выходу Hardware Serial всегда открыт
 // на kSerialBaud.
@@ -113,9 +113,6 @@ void BtConfigurator::init() {
     delay(400);
   }
   delay(800);
-
-  // Приветствие подтверждает, что Hardware Serial открыт на рабочей скорости.
-  serial_->println("hello PC from ARDU");
 }
 
 bool BtConfigurator::atCommandRaw_(const char *cmd, bool crlf,

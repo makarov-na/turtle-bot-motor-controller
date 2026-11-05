@@ -16,7 +16,7 @@ class BtConfigurator {
  public:
   BtConfigurator(HardwareSerial &serial, uint8_t ledPin);
 
-  // Переводит модуль на kSerialBaud, мигает результатом и здоровается с ПК.
+  // Переводит модуль на kSerialBaud и мигает результатом.
   void init();
 
  private:

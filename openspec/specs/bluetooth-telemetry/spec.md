@@ -3,25 +3,6 @@
 ## Purpose
 Передача отладочной телеметрии с Arduino на PC через HC-06 Bluetooth модуль по каналу Hardware Serial (D0/D1) с защитой логических уровней для RX HC-06.
 ## Requirements
-### Requirement: Arduino SHALL send a startup greeting via HC-06
-
-The system SHALL send the text message "hello PC from ARDU" once when the Arduino finishes setup, through the HC-06 Bluetooth module over Hardware Serial on pins D0 (RX) and D1 (TX) at 115200 baud. No periodic repetition of the greeting SHALL occur. Steady-state outgoing traffic consists of the periodic telemetry frame (separate requirement below), which is autonomous and not tied to command arrival.
-
-#### Scenario: Greeting sent on startup
-
-- **WHEN** Arduino powers on and completes setup
-- **THEN** the message "hello PC from ARDU" is sent once via Hardware Serial to HC-06
-
-#### Scenario: No periodic repetition of the greeting
-
-- **WHEN** 1 second has elapsed since the startup greeting
-- **THEN** no further greetings are sent; the only subsequent outgoing traffic is the periodic telemetry frame
-
-#### Scenario: Hardware Serial configuration unchanged
-
-- **WHEN** Arduino setup() is called
-- **THEN** Serial is initialized at 115200 baud on D0/D1 for both greeting output and incoming command parsing
-
 ### Requirement: Hardware Serial SHALL be initialized on D0/D1
 
 The system SHALL use the built-in Hardware Serial (UART) on pins D0 (RX, receiving from HC-06 TXD) and D1 (TX, transmitting to HC-06 RXD) at 115200 baud. SoftwareSerial MUST NOT be used, because its PCINT aliasing conflicts with the encoder `ISR(PCINT1_vect)` on the ATmega328P.
@@ -149,7 +130,7 @@ The HC-06 module's UART SHALL be configured to 115200 8N1 to match the firmware'
 #### Scenario: Module and firmware rates match
 
 - **WHEN** the HC-06 is configured to 115200 and the firmware calls `Serial.begin(115200)`
-- **THEN** greeting, commands and telemetry are exchanged without framing errors over a ≥60 s bidirectional run
+- **THEN** commands and telemetry are exchanged without framing errors over a ≥60 s bidirectional run
 
 #### Scenario: Mismatched rates are not silently accepted
 

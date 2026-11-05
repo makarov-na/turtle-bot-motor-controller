@@ -10,4 +10,8 @@
 // Скорость Hardware Serial: USB-монитор, HC-06 и ПК-пульт.
 constexpr uint32_t kSerialBaud = 115200;
 
+// Автоконфигурация HC-06 при старте: перевод модуля на kSerialBaud.
+// false — модуль должен быть уже настроен на kSerialBaud вручную.
+constexpr bool kEnableBtAutoConfig = false;
+
 #endif
