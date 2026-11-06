@@ -35,7 +35,7 @@ class Chassis {
 
   static constexpr uint8_t kMotorCount = 2;
 
-  void controlLoop_();
+  void controlStep_();
 
   Encoders &encoders_;
   Motor motors_[2];

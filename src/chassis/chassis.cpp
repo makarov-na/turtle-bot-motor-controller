@@ -56,7 +56,7 @@ void Chassis::tick(uint32_t now) {
   }
 
   if (state_ == DriveState::Run) {
-    controlLoop_();
+    controlStep_();
   }
 }
 
@@ -74,7 +74,7 @@ void Chassis::set_speed(float linearSpeed, float angularSpeed) {
   // Вход в режим управления после паузы: перебазировать опорную точку
   // контура, чтобы первая итерация не увидела накопленные за паузу тики и
   // время. Команда поверх уже идущего Run (heartbeat) НЕ перебазирует:
-  // иначе таймер контура сбрасывался бы каждые 200 мс и controlLoop_() не
+  // иначе таймер контура сбрасывался бы каждые 200 мс и controlStep_() не
   // успевал бы отработать.
   if (state_ != DriveState::Run) {
     lastControlMs_ = millis();
@@ -118,7 +118,7 @@ void Chassis::fillTelemetry(TelemetryFrame &frame) const {
   }
 }
 
-void Chassis::controlLoop_() {
+void Chassis::controlStep_() {
   uint32_t now = millis();
   uint32_t gap = now - lastControlMs_;
   if (gap < kPidPeriodMs) {

@@ -69,7 +69,7 @@
 
 - Прошивка: `src/chassis/encoders.cpp`, `src/chassis/motor.cpp`,
   `src/chassis/chassis.cpp`, `src/motor_controller.cpp`
-  (`Encoder::measureSpeed`, `Motor::pidUpdate`, `Chassis::controlLoop_`,
+  (`Encoder::measureSpeed`, `Motor::pidUpdate`, `Chassis::controlStep_`,
   `MotorController::tick`)
 - Архивные планы: `openspec/changes/archive/2026-10-18-decouple-telemetry-from-commands/`,
   `openspec/changes/archive/2026-10-19-balance-wheel-speeds/`
