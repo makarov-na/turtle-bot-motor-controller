@@ -2,9 +2,7 @@
 
 ## Purpose
 Define the safe default state of the motor driver after reset and the behavior of the `stop()` and `power_stop()` commands, so the robot never self-drives on boot and braking is explicit, bounded per call, and restartable by repeated calls.
-
 ## Requirements
-
 ### Requirement: Motors disabled after reset
 On startup the controller SHALL leave the motors disabled so that no drive voltage is applied until a command is issued.
 
@@ -30,6 +28,6 @@ On startup the controller SHALL leave the motors disabled so that no drive volta
 - **WHEN** `power_stop()` is called repeatedly at an interval shorter than the brake duration
 - **THEN** each call restarts the brake timer, the driver stays in braking until one brake duration after the last call, and then releases to the disabled state
 
-#### Scenario: Zero-command heartbeat holds braking
-- **WHEN** a zero-speed command arrives every 200 ms while the brake duration is 300 ms
-- **THEN** the driver remains in braking for as long as the zero commands continue, without coasting between frames
+#### Scenario: power_stop heartbeat holds braking
+- **WHEN** a `power_stop` command arrives every 200 ms while the brake duration is 300 ms
+- **THEN** the driver remains in braking for as long as the commands continue, without coasting between frames
