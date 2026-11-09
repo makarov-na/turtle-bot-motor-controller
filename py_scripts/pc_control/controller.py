@@ -13,7 +13,7 @@
     Down  — линейная скорость -10% (ниже 0 — задний ход)
     Left  — угловая скорость +10%
     Right — угловая скорость -10%
-    Space — пауза: удержание нуля через PID (set_speed 0.0 0.0); ещё раз — продолжить
+    Space — пауза: плавный спуск к нулю, затем PID-удержание; ещё раз — плавный разгон
     q     — выход (перед выходом боту уходит set_speed 0.0 0.0)
 
 Интерфейс — полноэкранная панель (alternate screen buffer): статус с
@@ -22,7 +22,9 @@
 На выходе экран восстанавливается.
 
 Текущая команда повторяется каждые 200 мс (heartbeat, питает watchdog
-прошивки). Используется только стандартная библиотека Python.
+прошивки). Плавные пауза и resume идут ступенями не более 10% от максимума
+на этом же heartbeat: отдельных таймеров и более частой отправки нет.
+Используется только стандартная библиотека Python.
 """
 
 import argparse
@@ -41,6 +43,9 @@ from dataclasses import dataclass
 
 HEARTBEAT_MS = 200
 STEP_PCT = 10.0
+# Шаг плавной паузы/resume: не более 10% от максимума за heartbeat. Отдельная
+# константа, чтобы тюнинг рампы не менял шаг стрелок.
+RAMP_STEP_PCT = 10.0
 CLAMP_MIN = -100.0
 CLAMP_MAX = 100.0
 # Скорость виртуального tty /dev/rfcomm0. Реальную скорость UART задаёт
@@ -63,8 +68,9 @@ KEY_LEFT = (b"\x1b[D", b"\x1bOD")
 
 SPACE = b" "
 
-# Пауза и выход шлют нулевую уставку. Прошивка удерживает её через PID в
-# состоянии Run (проинтегрированный ноль), а не выполняет power_stop().
+# Выход шлёт нулевую уставку; прошивка удерживает её через PID в состоянии
+# Run, а не выполняет power_stop(). Пауза приводит к этой же уставке плавной
+# рампой (см. RAMP_STEP_PCT).
 STOP_COMMAND = "set_speed 0.0 0.0\n"
 
 RECONNECT_ATTEMPTS = 5
@@ -98,9 +104,34 @@ def send_command(fd, linear_pct, angular_pct):
 
 
 def outgoing_speed(state):
+    # Последняя реально отправленная уставка — её же использует probe при
+    # подключении/реконнекте. Пауза/resume двигают её ступенями.
+    return state["ramp_linear"], state["ramp_angular"]
+
+
+def ramp_step(linear, angular, target_linear, target_angular, max_step):
+    # Ограничитель шага в процентах: общий коэффициент масштабирует обе
+    # разности, не поворачивая вектор изменения; модуль каждой компоненты
+    # меняется не больше max_step.
+    d_linear = target_linear - linear
+    d_angular = target_angular - angular
+    largest = max(abs(d_linear), abs(d_angular))
+    if largest <= max_step:
+        return target_linear, target_angular
+    k = max_step / largest
+    return linear + d_linear * k, angular + d_angular * k
+
+
+def advance_ramp(state):
+    # Цель рампы: сохранённая команда в движении, ноль на паузе.
     if state.get("paused"):
-        return 0.0, 0.0
-    return state["linear"], state["angular"]
+        target_linear, target_angular = 0.0, 0.0
+    else:
+        target_linear, target_angular = state["linear"], state["angular"]
+    state["ramp_linear"], state["ramp_angular"] = ramp_step(
+        state["ramp_linear"], state["ramp_angular"],
+        target_linear, target_angular, RAMP_STEP_PCT)
+    return state["ramp_linear"], state["ramp_angular"]
 
 
 class LinkLost(Exception):
@@ -359,8 +390,9 @@ def run(fd, state, ring):
     draw_panel(ring, state["linear"], state["angular"], FOOTER_HINTS)
     while True:
         now = time.monotonic()
-        out_linear, out_angular = outgoing_speed(state)
         if now - last_sent >= HEARTBEAT_MS / 1000.0:
+            # Каждый heartbeat — максимум одна ступень рампы.
+            out_linear, out_angular = advance_ramp(state)
             send_command(fd, out_linear, out_angular)
             last_sent = now
 
@@ -396,12 +428,12 @@ def run(fd, state, ring):
             if key == SPACE:
                 paused = not paused
                 state["paused"] = paused
-                if paused:
-                    # Нулевая уставка, а не power_stop: прошивка удерживает
-                    # ноль контуром и продолжает слать живую телеметрию.
-                    send_command(fd, 0.0, 0.0)
-                else:
-                    send_command(fd, state["linear"], state["angular"])
+                # Первый шаг — сразу, дальше — по heartbeat. На паузе цель
+                # рампы ноль, поэтому прошивка остаётся в Run и удерживает
+                # ноль через PID; stop/power_stop не используются.
+                out_linear, out_angular = advance_ramp(state)
+                send_command(fd, out_linear, out_angular)
+                if not paused:
                     draw_panel(ring, state["linear"], state["angular"], FOOTER_HINTS)
                 last_sent = time.monotonic()
             elif key in (b"q", b"Q", b"\x03"):
@@ -409,6 +441,11 @@ def run(fd, state, ring):
                 # Ctrl+C приходит как обычный байт 0x03, а не как SIGINT.
                 return
             elif not paused:
+                # Решение о немедленной отправке принимаем до изменения цели:
+                # если рампа уже идёт (current != old target), стрелка только
+                # обновляет цель, и шаг уйдёт на очередном heartbeat.
+                ramping = (state["ramp_linear"] != state["linear"] or
+                           state["ramp_angular"] != state["angular"])
                 changed = True
                 if key in KEY_UP:
                     state["linear"] = clamp(state["linear"] + STEP_PCT)
@@ -421,8 +458,12 @@ def run(fd, state, ring):
                 else:
                     changed = False
                 if changed:
-                    send_command(fd, state["linear"], state["angular"])
-                    last_sent = time.monotonic()
+                    if not ramping:
+                        # Вне рампы сохраняем прежнюю мгновенную реакцию.
+                        state["ramp_linear"] = state["linear"]
+                        state["ramp_angular"] = state["angular"]
+                        send_command(fd, state["linear"], state["angular"])
+                        last_sent = time.monotonic()
                     draw_panel(ring, state["linear"], state["angular"], FOOTER_HINTS)
 
 
@@ -438,7 +479,11 @@ def main():
         return 1
 
     old_attrs = termios.tcgetattr(sys.stdin.fileno())
-    state = {"linear": 0.0, "angular": 0.0, "paused": False}
+    # linear/angular — сохранённая (допаузная) цель; ramp_* — последняя
+    # реально отправленная уставка, которую двигает ограничитель шага.
+    state = {"linear": 0.0, "angular": 0.0,
+             "ramp_linear": 0.0, "ramp_angular": 0.0,
+             "paused": False}
     ring = TelemetryRing()
     try:
         tty.setraw(sys.stdin.fileno())
@@ -475,6 +520,10 @@ def main():
                 draw_panel(ring, state["linear"], state["angular"],
                            "Связь потеряна, переподключение...")
                 shutdown()
+                # За время обрыва watchdog остановил робота, поэтому рампу
+                # безопасно перезапустить с нуля. Сохранённая цель остаётся.
+                state["ramp_linear"] = 0.0
+                state["ramp_angular"] = 0.0
                 connected = False
                 reconnected = False
                 for _ in range(RECONNECT_ATTEMPTS):
