@@ -30,6 +30,12 @@ MotorTelemetry Motor::telemetry() const {
 }
 
 void Motor::setTarget(float target) {
+  // Переход уставки из ненулевой в ровно нулевую: однократный сброс
+  // интегратора, чтобы накопленный windup не удерживал колесо в движении.
+  // Повторные нулевые heartbeat-команды сюда не попадают: targetLinear_ уже 0.
+  if (targetLinear_ != 0.0f && target == 0.0f) {
+    resetIntegral();
+  }
   targetLinear_ = target;
 }
 
@@ -49,6 +55,13 @@ void Motor::resetPid() {
   integral_ = 0.0f;
   prevError_ = 0.0f;
   encoder_.resetFilter();
+}
+
+// Сброс только состояния ПИД: измерение, его фильтр и последний выход не
+// трогаются, поэтому контур продолжает работать без выброса.
+void Motor::resetIntegral() {
+  integral_ = 0.0f;
+  prevError_ = 0.0f;
 }
 
 void Motor::brake() {

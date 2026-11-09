@@ -12,7 +12,10 @@
 
 class CommandReceiver {
  public:
-  enum class Action : uint8_t { SetSpeed, PowerStop };
+  // Вид команды определяется только литералом строки, а не значениями чисел:
+  // set_speed → SetSpeed, stop → Stop (выбег), power_stop → PowerStop
+  // (торможение). Как применить действие, решает MotorController.
+  enum class Action : uint8_t { SetSpeed, Stop, PowerStop };
 
   struct Command {
     Action action;

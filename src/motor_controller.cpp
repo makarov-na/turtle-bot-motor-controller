@@ -22,10 +22,16 @@ void MotorController::tick() {
   uint32_t cmdNow = millis();
   CommandReceiver::Command cmd;
   while (commands_.poll(cmdNow, cmd)) {
-    if (cmd.action == CommandReceiver::Action::PowerStop) {
-      chassis_.power_stop();
-    } else {
-      chassis_.set_speed(cmd.linear, cmd.angular);
+    switch (cmd.action) {
+      case CommandReceiver::Action::SetSpeed:
+        chassis_.set_speed(cmd.linear, cmd.angular);
+        break;
+      case CommandReceiver::Action::Stop:
+        chassis_.stop();
+        break;
+      case CommandReceiver::Action::PowerStop:
+        chassis_.power_stop();
+        break;
     }
   }
 

@@ -1,11 +1,11 @@
 // --- Приём и разбор команд, watchdog: реализация ---------------------------
-// Watchdog остановлен, пока не пришла первая валидная команда; каждая валидная
-// команда сбрасывает таймер. CommandReceiver только сообщает о срабатывании,
-// остановку выполняет MotorController.
+// CommandReceiver разбирает только синтаксис строки: set_speed v w, stop,
+// power_stop. Watchdog остановлен, пока не пришла первая валидная команда;
+// каждая валидная команда сбрасывает таймер. CommandReceiver только сообщает
+// о срабатывании, остановку выполняет MotorController.
 
 #include "command_receiver.h"
 
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -44,40 +44,46 @@ bool CommandReceiver::parseCommand_(char *buf, uint32_t now, Command &out) {
   // (нужна принудительная линковка libscanf_flt), а strtod доступен всегда.
   char *saveptr = nullptr;
   char *tok = strtok_r(buf, " ", &saveptr);
-  if (!tok || strcmp(tok, "set_speed") != 0) {
+  if (!tok) {
     return false;
   }
-  char *vTok = strtok_r(nullptr, " ", &saveptr);
-  char *wTok = strtok_r(nullptr, " ", &saveptr);
-  char *extra = strtok_r(nullptr, " ", &saveptr);
-  if (!vTok || !wTok || extra != nullptr) {
-    return false;
-  }
-  char *endV = nullptr;
-  char *endW = nullptr;
-  float v = (float)strtod(vTok, &endV);
-  float w = (float)strtod(wTok, &endW);
-  if (endV == vTok || endW == wTok || *endV != '\0' || *endW != '\0') {
+
+  if (strcmp(tok, "stop") == 0 || strcmp(tok, "power_stop") == 0) {
+    // Остановки — ровно один токен, без аргументов и хвостов.
+    if (strtok_r(nullptr, " ", &saveptr) != nullptr) {
+      return false;
+    }
+    out.action =
+        (strcmp(tok, "power_stop") == 0) ? Action::PowerStop : Action::Stop;
+    out.linear = 0.0f;
+    out.angular = 0.0f;
+  } else if (strcmp(tok, "set_speed") == 0) {
+    char *vTok = strtok_r(nullptr, " ", &saveptr);
+    char *wTok = strtok_r(nullptr, " ", &saveptr);
+    char *extra = strtok_r(nullptr, " ", &saveptr);
+    if (!vTok || !wTok || extra != nullptr) {
+      return false;
+    }
+    char *endV = nullptr;
+    char *endW = nullptr;
+    float v = (float)strtod(vTok, &endV);
+    float w = (float)strtod(wTok, &endW);
+    if (endV == vTok || endW == wTok || *endV != '\0' || *endW != '\0') {
+      return false;
+    }
+    out.action = Action::SetSpeed;
+    out.linear = v;
+    out.angular = w;
+  } else {
     return false;
   }
 
   lastCommandMs_ = now;
   watchdogTripped_ = false;
 
-  if (fabsf(v) < 0.05f && fabsf(w) < 0.05f) {
-    // 0-команда: резкая остановка + сброс ПИД. Без торможения integral
-    // windup после разгона оставляет бота едущим ~ V_MAX*Ki/Kp·I_limit ≈
-    // 27 мм/с: ошибка(0−measured)+Ki·I = 0 достигается при measured>0.
-    out.action = Action::PowerStop;
-  } else {
-    out.action = Action::SetSpeed;
-  }
-  out.linear = v;
-  out.angular = w;
-
   cmdCounter_++;
-  lastLinear_ = v;
-  lastAngular_ = w;
+  lastLinear_ = out.linear;
+  lastAngular_ = out.angular;
   return true;
 }
 

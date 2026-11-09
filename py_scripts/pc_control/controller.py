@@ -13,7 +13,7 @@
     Down  — линейная скорость -10% (ниже 0 — задний ход)
     Left  — угловая скорость +10%
     Right — угловая скорость -10%
-    Space — пауза: мгновенный стоп и заморозка телеметрии; ещё раз — продолжить
+    Space — пауза: удержание нуля через PID (set_speed 0.0 0.0); ещё раз — продолжить
     q     — выход (перед выходом боту уходит set_speed 0.0 0.0)
 
 Интерфейс — полноэкранная панель (alternate screen buffer): статус с
@@ -63,6 +63,8 @@ KEY_LEFT = (b"\x1b[D", b"\x1bOD")
 
 SPACE = b" "
 
+# Пауза и выход шлют нулевую уставку. Прошивка удерживает её через PID в
+# состоянии Run (проинтегрированный ноль), а не выполняет power_stop().
 STOP_COMMAND = "set_speed 0.0 0.0\n"
 
 RECONNECT_ATTEMPTS = 5
@@ -395,6 +397,8 @@ def run(fd, state, ring):
                 paused = not paused
                 state["paused"] = paused
                 if paused:
+                    # Нулевая уставка, а не power_stop: прошивка удерживает
+                    # ноль контуром и продолжает слать живую телеметрию.
                     send_command(fd, 0.0, 0.0)
                 else:
                     send_command(fd, state["linear"], state["angular"])

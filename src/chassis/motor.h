@@ -34,6 +34,7 @@ class Motor {
   void tick(float dtSec);
   void rebaseEncoder();
   void resetPid();
+  void resetIntegral();
   void brake();
   void coast();
   float pidUpdate(float setpoint, float feedback, float dt);
