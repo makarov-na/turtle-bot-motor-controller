@@ -16,7 +16,7 @@ const uint8_t kPinEncLA = A2;
 const uint8_t kPinEncLB = A3;
 
 const uint16_t kEncoderCpr = 11;
-const uint8_t kGearRatio = 56;
+const uint8_t kGearRatio = 90;
 const uint32_t kTicksPerWheelRev = kEncoderCpr * 4UL * kGearRatio;
 
 const uint8_t kLeftEncoder = 0;
@@ -26,8 +26,8 @@ const uint8_t kRightEncoder = 1;
 const uint16_t kMinTickUs = 50;
 
 // Постоянная времени сглаживания измеренной скорости (EMA). При периоде
-// контура 10 мс один тик энкодера — это ~8.5 мм/с, а Kp=1.5 превращает
-// квантование в ±10 ШИМ прямо на моторе (видимая неравномерность). EMA с
+// контура 10 мс один тик энкодера — это ~5.3 мм/с, а Kp=1.5 превращает
+// квантование в ±8 ШИМ прямо на моторе (видимая неравномерность). EMA с
 // τ=60 мс режет шум примерно в 3.6 раза, оставляя контур достаточно быстрым.
 const float kSpeedFilterTauS = 0.06f;
 
@@ -65,7 +65,7 @@ float Encoder::measureSpeed(float dtSec, int8_t direction) {
   prevTicks_ = currentTicks;
   float mmPerTick = PI * kWheelDiameterMm / (float)kTicksPerWheelRev;
   float raw = (float)delta * mmPerTick * (float)direction / dtSec;
-  // EMA: единичный отсчёт за такт квантуется шагом ~8.5 мм/с, и ПИД с
+  // EMA: единичный отсчёт за такт квантуется шагом ~5.3 мм/с, и ПИД с
   // Kp=1.5 гоняется за этим шумом. Сглаживаем, чтобы ШИМ не дрожал.
   if (!filterInit_) {
     measuredMmS_ = raw;
