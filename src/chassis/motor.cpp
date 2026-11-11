@@ -9,7 +9,10 @@
 namespace {
 
 const float kPidKp = 1.5f;
-const float kPidKi = 0.2f;
+// Ki подобран по живым замерам: правому колесу нужно на 30-35 ШИМ меньше,
+// чем левому, и при 0.2 интегратор добирал этот перекос ~15 с, всё это время
+// бот ехал по дуге. При 1.5 те же 30 ШИМ набираются за первые секунды.
+const float kPidKi = 1.5f;
 const float kPidKd = 0.0f;
 const float kPidIntegralLimit = 500.0f;
 
@@ -78,14 +81,23 @@ void Motor::coast() {
 
 float Motor::pidUpdate(float setpoint, float feedback, float dt) {
   float error = setpoint - feedback;
-  integral_ += error * dt;
-  integral_ = constrain(integral_, -kPidIntegralLimit, kPidIntegralLimit);
   float derivative = dt > 0.0f ? (error - prevError_) / dt : 0.0f;
   prevError_ = error;
-  float out = kPidFf * setpoint
-            + kPidKp * error
-            + kPidKi * integral_
-            + kPidKd * derivative;
+
+  // Условное интегрирование (anti-windup): пока выход упирается в предел моста
+  // в сторону ошибки, интегратор не копим. На старте с нуля ошибка ~120 мм/с,
+  // и при Ki=1.5 за время разгона накопились бы десятки ШИМ, которые потом
+  // рассасываются секундами — это общий перелёт по скорости, а не выравнивание.
+  float drive = kPidFf * setpoint + kPidKp * error + kPidKd * derivative;
+  float candidate = drive + kPidKi * integral_;
+  bool saturated = (candidate > 255.0f && error > 0.0f) ||
+                   (candidate < -255.0f && error < 0.0f);
+  if (!saturated) {
+    integral_ += error * dt;
+    integral_ = constrain(integral_, -kPidIntegralLimit, kPidIntegralLimit);
+  }
+
+  float out = drive + kPidKi * integral_;
   return constrain(out, -255.0f, 255.0f);
 }
 
