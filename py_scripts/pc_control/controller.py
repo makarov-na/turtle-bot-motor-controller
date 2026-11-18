@@ -58,7 +58,7 @@ LINK_TIMEOUT_S = 5.0
 V_MAX_MM_S = 300.0
 WHEELBASE_MM = 185.0
 # Лимиты должны совпадать с константами kVMaxMmS и kWheelbaseMm в
-# src/chassis/drive_config.h
+# src/app_config.h
 OMEGA_MAX_RAD_S = 2.0 * V_MAX_MM_S / WHEELBASE_MM
 
 KEY_UP = (b"\x1b[A", b"\x1bOA")

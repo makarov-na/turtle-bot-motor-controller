@@ -1,5 +1,5 @@
 // --- Квадратурные энкодеры: реализация -------------------------------------
-// Пины A0-A3 — это PORTC, поэтому ISR читает состояние сразу всей группы PINC.
+// Пины A0-A5 — это PORTC, поэтому ISR читает состояние сразу всей группы PINC.
 // Вне класса остаётся только определение статической таблицы kQuadTable:
 // в C++11 (AVR-ядро собирает с -std=gnu++11) статический массив-член нельзя
 // инициализировать в теле класса.
@@ -10,17 +10,9 @@
 
 namespace {
 
-const uint8_t kPinEncRA = A0;
-const uint8_t kPinEncRB = A1;
-const uint8_t kPinEncLA = A2;
-const uint8_t kPinEncLB = A3;
-
 const uint16_t kEncoderCpr = 11;
 const uint8_t kGearRatio = 90;
 const uint32_t kTicksPerWheelRev = kEncoderCpr * 4UL * kGearRatio;
-
-const uint8_t kLeftEncoder = 0;
-const uint8_t kRightEncoder = 1;
 
 // Один тик не чаще kMinTickUs — защита от дребезга контактов.
 const uint16_t kMinTickUs = 50;
@@ -50,6 +42,20 @@ const int8_t Encoder::kQuadTable[16] = {
     0, -1, 1, 0
 };
 
+Encoder::Encoder(uint8_t pinA, uint8_t pinB)
+    : pinA_(pinA),
+      pinB_(pinB),
+      bitA_(digitalPinToPCMSKbit(pinA)),
+      bitB_(digitalPinToPCMSKbit(pinB)),
+      pcMask_((1 << digitalPinToPCMSKbit(pinA)) |
+              (1 << digitalPinToPCMSKbit(pinB))) {}
+
+void Encoder::initPins() {
+  pinMode(pinA_, INPUT_PULLUP);
+  pinMode(pinB_, INPUT_PULLUP);
+  PCMSK1 |= pcMask_;
+}
+
 void Encoder::rebase() {
   prevTicks_ = takeTicks();
   filterInit_ = false;
@@ -59,12 +65,12 @@ void Encoder::resetFilter() {
   filterInit_ = false;
 }
 
-float Encoder::measureSpeed(float dtSec, int8_t direction) {
+float Encoder::measureSpeed(float dtSec) {
   int32_t currentTicks = takeTicks();
   int32_t delta = currentTicks - prevTicks_;
   prevTicks_ = currentTicks;
   float mmPerTick = PI * kWheelDiameterMm / (float)kTicksPerWheelRev;
-  float raw = (float)delta * mmPerTick * (float)direction / dtSec;
+  float raw = (float)delta * mmPerTick / dtSec;
   // EMA: единичный отсчёт за такт квантуется шагом ~5.3 мм/с, и ПИД с
   // Kp=1.5 гоняется за этим шумом. Сглаживаем, чтобы ШИМ не дрожал.
   if (!filterInit_) {
@@ -75,6 +81,12 @@ float Encoder::measureSpeed(float dtSec, int8_t direction) {
     measuredMmS_ += alpha * (raw - measuredMmS_);
   }
   return measuredMmS_;
+}
+
+void Encoder::updateFromPort(uint8_t portBits) {
+  uint8_t a = (portBits >> bitA_) & 0x01;
+  uint8_t b = (portBits >> bitB_) & 0x01;
+  update((b << 1) | a);
 }
 
 void Encoder::update(uint8_t state) {
@@ -98,28 +110,20 @@ int32_t Encoder::takeTicks() const {
   return snapshot;
 }
 
+Encoders::Encoders(Encoder &left, Encoder &right)
+    : left_(left), right_(right) {}
+
 void Encoders::init() {
-  pinMode(kPinEncLA, INPUT_PULLUP);
-  pinMode(kPinEncLB, INPUT_PULLUP);
-  pinMode(kPinEncRA, INPUT_PULLUP);
-  pinMode(kPinEncRB, INPUT_PULLUP);
+  left_.initPins();
+  right_.initPins();
 
   PCICR |= (1 << PCIE1);
-  PCMSK1 |= (1 << PCINT8) | (1 << PCINT9) | (1 << PCINT10) | (1 << PCINT11);
 }
 
 void Encoders::handleInterrupt() {
-  uint8_t pins = PINC & 0x0F;
-  encoders_[kLeftEncoder].update((pins >> 2) & 0x03);
-  encoders_[kRightEncoder].update(pins & 0x03);
-}
-
-Encoder &Encoders::left() {
-  return encoders_[kLeftEncoder];
-}
-
-Encoder &Encoders::right() {
-  return encoders_[kRightEncoder];
+  uint8_t pins = PINC;
+  left_.updateFromPort(pins);
+  right_.updateFromPort(pins);
 }
 
 ISR(PCINT1_vect) {

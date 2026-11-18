@@ -4,7 +4,7 @@
 
 #include <math.h>
 
-#include "drive_config.h"
+#include "../app_config.h"
 
 namespace {
 
@@ -26,10 +26,17 @@ const float kPidFf = 255.0f / kVMaxMmS;
 }  // namespace
 
 Motor::Motor(uint8_t pwm, uint8_t in1, uint8_t in2, int8_t sign, Encoder &enc)
-    : pinPwm_(pwm), pinIn1_(in1), pinIn2_(in2), motorSign_(sign), encoder_(enc) {}
+    : pinPwm_(pwm), pinIn1_(in1), pinIn2_(in2), sign_(sign), encoder_(enc) {}
 
 MotorTelemetry Motor::telemetry() const {
   return MotorTelemetry{measuredLinear_, lastOut_, integral_};
+}
+
+void Motor::init() {
+  pinMode(pinPwm_, OUTPUT);
+  pinMode(pinIn1_, OUTPUT);
+  pinMode(pinIn2_, OUTPUT);
+  coast();
 }
 
 void Motor::setTarget(float target) {
@@ -45,7 +52,9 @@ void Motor::setTarget(float target) {
 // Одна итерация контура: замер, PID и выдача ШИМ. Порядок шагов прежний —
 // сначала измерение, затем закон управления, затем мост.
 void Motor::tick(float dtSec) {
-  measuredLinear_ = encoder_.measureSpeed(dtSec, motorSign_);
+  // Измерение приходит в системе энкодера; знак колеса переводит его в
+  // систему робота. Контур и телеметрия работают только в системе робота.
+  measuredLinear_ = encoder_.measureSpeed(dtSec) * (float)sign_;
   lastOut_ = pidUpdate(targetLinear_, measuredLinear_, dtSec);
   applyPwm(lastOut_);
 }
@@ -102,8 +111,9 @@ float Motor::pidUpdate(float setpoint, float feedback, float dt) {
 }
 
 void Motor::applyPwm(float pwmCmd) {
-  bool robotForward = pwmCmd >= 0.0f;
-  bool motorForward = (motorSign_ >= 0) ? robotForward : !robotForward;
+  // Выход контура — в системе робота; мост получает систему мотора.
+  float motorCmd = (float)sign_ * pwmCmd;
+  bool motorForward = motorCmd >= 0.0f;
   if (motorForward) {
     digitalWrite(pinIn1_, LOW);
     digitalWrite(pinIn2_, HIGH);
@@ -111,5 +121,5 @@ void Motor::applyPwm(float pwmCmd) {
     digitalWrite(pinIn1_, HIGH);
     digitalWrite(pinIn2_, LOW);
   }
-  analogWrite(pinPwm_, (int)constrain(fabsf(pwmCmd), 0.0f, 255.0f));
+  analogWrite(pinPwm_, (int)constrain(fabsf(motorCmd), 0.0f, 255.0f));
 }

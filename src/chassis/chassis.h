@@ -1,7 +1,8 @@
 // --- Привод целиком: интерфейс ----------------------------------------------
-// Chassis владеет двумя моторами, режимом привода, таймерами, насыщением
-// уставок и остановками. Снаружи предоставляет set_speed/stop/power_stop и
-// снимок для телеметрии.
+// Chassis владеет режимом привода, таймерами, насыщением уставок и
+// остановками. Моторы приходят ссылками из main.cpp; об энкодерах шасси не
+// знает. Снаружи предоставляет set_speed/stop/power_stop и снимок для
+// телеметрии.
 //
 // Реализация — в chassis.cpp. Экземпляр Chassis создаётся в основном скетче.
 
@@ -10,13 +11,12 @@
 
 #include <Arduino.h>
 
-#include "encoders.h"
 #include "motor.h"
 #include "../telemetry/telemetry.h"
 
 class Chassis {
  public:
-  explicit Chassis(Encoders &encoders);
+  Chassis(Motor &left, Motor &right);
 
   void init();
 
@@ -33,12 +33,10 @@ class Chassis {
  private:
   enum class DriveState : uint8_t { Stopped, Run, Braking };
 
-  static constexpr uint8_t kMotorCount = 2;
-
   void controlStep_();
 
-  Encoders &encoders_;
-  Motor motors_[2];
+  Motor &left_;
+  Motor &right_;
   DriveState state_ = DriveState::Stopped;
   uint32_t brakeStartMs_ = 0;
   uint32_t lastControlMs_ = 0;

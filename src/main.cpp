@@ -32,24 +32,32 @@
 #include "motor_controller.h"
 #include "chassis/chassis.h"
 #include "chassis/encoders.h"
+#include "chassis/motor.h"
 #include "telemetry/telemetry.h"
 
 // Модули — отдельные C++-единицы трансляции:
+//   src/app_config.h — настройки связи, параметры привода и распиновка платы;
 //   src/chassis/encoders.h/.cpp — Encoder/Encoders и ISR квадратурных энкодеров;
 //   src/chassis/chassis.h/.cpp — Chassis: привод целиком, режимы и телеметрия;
-//   src/chassis/motor.h/.cpp — Motor: драйвер, энкодер и контур скорости;
-//   src/chassis/drive_config.h — общие константы привода (V_MAX, база колёс);
+//   src/chassis/motor.h/.cpp — Motor/LeftMotor/RightMotor: драйвер, энкодер,
+//     знак колеса и контур скорости;
 //   motor_controller.h/.cpp — MotorController: композиция ядровых модулей;
 //   src/bluetooth/bt_config.h/.cpp — автоконфигурация HC-06;
 //   src/protocol/command_receiver.h/.cpp — приём, разбор команд и watchdog;
 //   src/telemetry/telemetry.h/.cpp — TelemetryFrame и периодический кадр ack.
 //
-// Здесь остаются только точки входа Arduino и создание корневых экземпляров.
-// Порядок объявления = порядок конструирования: Encoders первым (его адрес
-// нужен ISR), MotorController последним (он получает ссылки на остальные
-// модули).
-Encoders encoders;
-Chassis chassis(encoders);
+// Здесь — корень композиции и точки входа Arduino. Порядок объявления =
+// порядок конструирования: энкодеры → группа порта → моторы → шасси →
+// остальные модули.
+Encoder leftEncoder(kPinEncLA, kPinEncLB);
+Encoder rightEncoder(kPinEncRA, kPinEncRB);
+Encoders encoders(leftEncoder, rightEncoder);
+
+LeftMotor leftMotor(kPinEnbL, kPinIn3L, kPinIn4L, leftEncoder);
+RightMotor rightMotor(kPinEnaR, kPinIn1R, kPinIn2R, rightEncoder);
+
+Chassis chassis(leftMotor, rightMotor);
+
 CommandReceiver commands(Serial);
 Telemetry telemetry(Serial);
 MotorController controller(chassis, commands, telemetry);
@@ -59,6 +67,9 @@ void setup() {
   // UART для телеметрии и команд. bt.init() тоже поднимает Serial, но сейчас
   // автоконфигурация HC-06 отключена, поэтому инициализация нужна явно.
   Serial.begin(kSerialBaud);
+
+  // PORTC/PCINT1: пины энкодеров как входы, маска и разрешение прерывания.
+  encoders.init();
 
   // Инициализация железа — явная, после конструирования всех модулей.
   controller.init();

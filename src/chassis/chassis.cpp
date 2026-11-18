@@ -4,55 +4,31 @@
 
 #include <math.h>
 
-#include "drive_config.h"
+#include "../app_config.h"
 
 namespace {
 
-const uint8_t kPinIn1R = 2;
-const uint8_t kPinIn2R = 3;
-const uint8_t kPinEnaR = 5;
-
-const uint8_t kPinIn3L = 4;
-const uint8_t kPinIn4L = 7;
-const uint8_t kPinEnbL = 6;
-
 const float kOmegaMaxRadS = 2.0f * kVMaxMmS / kWheelbaseMm;
-
-const uint8_t kLeftMotor = 0;
-const uint8_t kRightMotor = 1;
 
 const uint32_t kBrakeDurationMs = 300;
 const uint32_t kPidPeriodMs = 10;
 
 }  // namespace
 
-Chassis::Chassis(Encoders &encoders)
-    : encoders_(encoders),
-      motors_{
-          {kPinEnbL, kPinIn3L, kPinIn4L, -1, encoders.left()},
-          {kPinEnaR, kPinIn1R, kPinIn2R, +1, encoders.right()}} {}
+Chassis::Chassis(Motor &left, Motor &right) : left_(left), right_(right) {}
 
 void Chassis::init() {
-  pinMode(kPinEnaR, OUTPUT);
-  pinMode(kPinIn1R, OUTPUT);
-  pinMode(kPinIn2R, OUTPUT);
-  pinMode(kPinEnbL, OUTPUT);
-  pinMode(kPinIn3L, OUTPUT);
-  pinMode(kPinIn4L, OUTPUT);
-
-  motors_[kLeftMotor].coast();
-  motors_[kRightMotor].coast();
+  left_.init();
+  right_.init();
   state_ = DriveState::Stopped;
-
-  encoders_.init();
 }
 
 void Chassis::tick(uint32_t now) {
   if (state_ == DriveState::Braking &&
       now - brakeStartMs_ >= kBrakeDurationMs) {
     state_ = DriveState::Stopped;
-    motors_[kLeftMotor].coast();
-    motors_[kRightMotor].coast();
+    left_.coast();
+    right_.coast();
   }
 
   if (state_ == DriveState::Run) {
@@ -78,44 +54,45 @@ void Chassis::set_speed(float linearSpeed, float angularSpeed) {
   // успевал бы отработать.
   if (state_ != DriveState::Run) {
     lastControlMs_ = millis();
-    for (uint8_t i = 0; i < kMotorCount; i++) {
-      motors_[i].rebaseEncoder();
-    }
+    left_.rebaseEncoder();
+    right_.rebaseEncoder();
   }
 
   state_ = DriveState::Run;
-  motors_[kLeftMotor].setTarget(vLeft);
-  motors_[kRightMotor].setTarget(vRight);
+  left_.setTarget(vLeft);
+  right_.setTarget(vRight);
 }
 
 void Chassis::stop() {
   state_ = DriveState::Stopped;
-  motors_[kLeftMotor].setTarget(0.0f);
-  motors_[kRightMotor].setTarget(0.0f);
-  motors_[kLeftMotor].coast();
-  motors_[kRightMotor].coast();
-  motors_[kLeftMotor].resetPid();
-  motors_[kRightMotor].resetPid();
+  left_.setTarget(0.0f);
+  right_.setTarget(0.0f);
+  left_.coast();
+  right_.coast();
+  left_.resetPid();
+  right_.resetPid();
 }
 
 void Chassis::power_stop() {
-  motors_[kLeftMotor].setTarget(0.0f);
-  motors_[kRightMotor].setTarget(0.0f);
-  motors_[kLeftMotor].resetPid();
-  motors_[kRightMotor].resetPid();
+  left_.setTarget(0.0f);
+  right_.setTarget(0.0f);
+  left_.resetPid();
+  right_.resetPid();
   state_ = DriveState::Braking;
   brakeStartMs_ = millis();
-  motors_[kLeftMotor].brake();
-  motors_[kRightMotor].brake();
+  left_.brake();
+  right_.brake();
 }
 
 void Chassis::fillTelemetry(TelemetryFrame &frame) const {
-  for (uint8_t i = 0; i < kMotorCount; i++) {
-    MotorTelemetry t = motors_[i].telemetry();
-    frame.measured[i] = t.measuredSpeed;
-    frame.pwm[i] = t.pwm;
-    frame.integral[i] = t.integral;
-  }
+  MotorTelemetry left = left_.telemetry();
+  MotorTelemetry right = right_.telemetry();
+  frame.measured[0] = left.measuredSpeed;
+  frame.measured[1] = right.measuredSpeed;
+  frame.pwm[0] = left.pwm;
+  frame.pwm[1] = right.pwm;
+  frame.integral[0] = left.integral;
+  frame.integral[1] = right.integral;
 }
 
 void Chassis::controlStep_() {
@@ -135,7 +112,6 @@ void Chassis::controlStep_() {
   // ложный огромный gap.
   lastControlMs_ = now;
 
-  for (uint8_t i = 0; i < kMotorCount; i++) {
-    motors_[i].tick(dt);
-  }
+  left_.tick(dt);
+  right_.tick(dt);
 }
