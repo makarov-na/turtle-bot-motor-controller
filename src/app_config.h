@@ -36,11 +36,11 @@ constexpr uint8_t kPinEncLB = A3;
 // L298N: правый мотор.
 constexpr uint8_t kPinIn1R = 2;
 constexpr uint8_t kPinIn2R = 3;
-constexpr uint8_t kPinPwmR = 5;
+constexpr uint8_t kPinEnaR = 5;
 
 // L298N: левый мотор.
 constexpr uint8_t kPinIn3L = 4;
 constexpr uint8_t kPinIn4L = 7;
-constexpr uint8_t kPinPwmL = 6;
+constexpr uint8_t kPinEnbL = 6;
 
 #endif

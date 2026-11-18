@@ -53,8 +53,8 @@ Encoder leftEncoder(kPinEncLA, kPinEncLB);
 Encoder rightEncoder(kPinEncRA, kPinEncRB);
 Encoders encoders(leftEncoder, rightEncoder);
 
-LeftMotor leftMotor(kPinPwmL, kPinIn3L, kPinIn4L, leftEncoder);
-RightMotor rightMotor(kPinPwmR, kPinIn1R, kPinIn2R, rightEncoder);
+LeftMotor leftMotor(kPinEnbL, kPinIn3L, kPinIn4L, leftEncoder);
+RightMotor rightMotor(kPinEnaR, kPinIn1R, kPinIn2R, rightEncoder);
 
 Chassis chassis(leftMotor, rightMotor);
 
