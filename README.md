@@ -184,4 +184,5 @@ openspec/                   спецификации, активные изме�
 ## Документация
 
 Подробное описание блока управления приводом:
-<https://github.com/makarov-na/turtle-bot/blob/refactoring/docs/4.%20Блок%20управления%20приводом/spec.md>
+
+[Блок управления приводом.md](https://github.com/makarov-na/turtle-bot/blob/master/docs/4.%20Блок%20управления%20приводом/Блок%20управления%20приводом.md)
