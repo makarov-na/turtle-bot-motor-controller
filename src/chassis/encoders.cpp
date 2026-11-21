@@ -8,6 +8,8 @@
 
 #include <util/atomic.h>
 
+#include "../app_config.h"
+
 namespace {
 
 const uint16_t kEncoderCpr = 11;
@@ -22,8 +24,6 @@ const uint16_t kMinTickUs = 50;
 // квантование в ±8 ШИМ прямо на моторе (видимая неравномерность). EMA с
 // τ=60 мс режет шум примерно в 3.6 раза, оставляя контур достаточно быстрым.
 const float kSpeedFilterTauS = 0.06f;
-
-const float kWheelDiameterMm = 67.0f;
 
 }  // namespace
 
