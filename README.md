@@ -1,5 +1,7 @@
 # Блок управления приводом turtle-bot
 
+Входит в проект https://github.com/makarov-na/turtle-bot
+
 Прошивка для Arduino Nano: два мотора с квадратурными энкодерами, драйвер
 L298N и Bluetooth-модуль HC-06. Бот принимает команды по Bluetooth,
 стабилизирует скорость колёс ПИД-регулятором и отдаёт телеметрию.
@@ -164,17 +166,95 @@ ack <n> <v> <w> mL=<ml> mR=<mr> oL=<ol> oR=<or> iL=<il> iR=<ir>
 ## Структура проекта
 
 ```text
-src/
-  main.cpp                  точка входа Arduino
-  app_config.h              общие настройки (скорость UART)
-  motor_controller.*        композиция модулей
-  bluetooth/                автоконфигурация HC-06
-  chassis/                  моторы, энкодеры, ПИД, привод
-  protocol/                 приём и разбор команд
-  telemetry/                кадр телеметрии
-py_scripts/pc_control/      консольный пульт
-openspec/                   спецификации и backlog
+platformio.ini              конфигурация сборки: плата nanoatmega328new,
+                            framework Arduino, скорость монитора 115200
+
+src/                        прошивка (C++, PlatformIO собирает всё отсюда)
+  main.cpp                  точка входа Arduino: создаёт все объекты в нужном
+                            порядке, настраивает UART, энкодеры и в loop()
+                            вызывает controller.tick()
+  app_config.h              единое место для констант: скорость UART, флаг
+                            автоконфигурации HC-06, параметры привода
+                            (макс. скорость, база колёс) и распиновка
+  motor_controller.h/.cpp   MotorController — связывает остальные модули:
+                            на каждом тике двигает привод, разбирает команды,
+                            применяет их к шасси, отправляет телеметрию и
+                            останавливает привод при срабатывании watchdog.
+                            Собственной логики протокола и привода не имеет
+
+  chassis/                  привод и всё, что с ним связано
+    chassis.h/.cpp          Chassis — привод целиком: режимы Stopped/Run/
+                            Braking, пересчёт линейной и угловой скорости
+                            в уставки левого и правого колеса, пропорциональное
+                            снижение уставок при превышении kVMaxMmS, период
+                            PID 10 мс и таймер торможения 300 мс
+    motor.h/.cpp            Motor (базовый класс) — одно колесо: пины L298N,
+                            направление, счётчик энкодера и ПИД-регулятор
+                            скорости. LeftMotor/RightMotor задают знак
+                            колеса (+1 / −1) для зеркальной сборки
+    encoders.h/.cpp         Encoder — квадратурный энкодер одного колеса:
+                            счётчик тиков, подавление дребезга, EMA-фильтр
+                            скорости. Encoders — общая группа PORTC и ISR
+                            PCINT1_vect, которая раздаёт снимок пинов обоим
+                            энкодерам
+
+  protocol/
+    command_receiver.h/.cpp CommandReceiver — читает строки из UART,
+                            разбирает set_speed / stop / power_stop,
+                            ведёт счётчик команд, хранит последнюю уставку
+                            и сообщает о срабатывании watchdog (1000 мс).
+                            Про привод ничего не знает
+
+  telemetry/
+    telemetry.h/.cpp        TelemetryFrame — снимок кадра ack; Telemetry
+                            форматирует его и печатает не чаще раза в 200 мс
+
+  bluetooth/
+    bt_config.h/.cpp        BtConfigurator — опциональная автоконфигурация
+                            HC-06 по AT-командам при старте (флаг
+                            kEnableBtAutoConfig), результат — вспышки D13
+
+py_scripts/pc_control/      пульт для ПК на Python (только стандартная
+                            библиотека)
+  controller.py             полноэкранный консольный пульт: стрелки, пауза,
+                            heartbeat 200 мс, таблица принятых ack
+  connect-to-bt.sh          вспомогательный скрипт: привязывает RFCOMM-канал
+                            /dev/rfcomm0 и выводит входящие данные
+
+openspec/                   рабочая документация проекта
+  specs/                    принятые спецификации: motion-control,
+                            encoder-mapping, motor-braking,
+                            bt-command-receiver, bluetooth-telemetry,
+                            pc-keyboard-control
+  changes/                  активные изменения и их архив
+  backlog/                  открытые задачи и черновики идей
+
+include/ lib/ test/         стандартные каталоги PlatformIO; сейчас пустые
+                            (только README-заглушки), код их не использует
+
+.pio/ .vscode/              служебные каталоги PlatformIO и VS Code;
+                            в git не входят
 ```
+
+Порядок создания объектов в `src/main.cpp` важен: энкодеры → группа
+энкодеров → моторы → шасси → приёмник команд и телеметрия →
+`MotorController`. ISR энкодеров обращается к группе `encoders` по имени,
+поэтому объекты объявлены глобально, а не внутри `setup()`.
+
+Поток вызовов на каждом витке `loop()`:
+
+```text
+loop()
+  └─ MotorController::tick()
+       ├─ Chassis::tick()          PID-итерация раз в 10 мс, если режим Run
+       ├─ CommandReceiver::poll()  чтение и разбор команд, применение к Chassis
+       ├─ Telemetry::tick()        кадр ack раз в 200 мс
+       └─ watchdog                 нет команд > 1000 мс → Chassis::stop()
+```
+
+Зависимости идут в одну сторону: `protocol` и `telemetry` не знают про
+привод, `chassis` не знает про UART, а связывает их только
+`MotorController`.
 
 ## Документация
 
